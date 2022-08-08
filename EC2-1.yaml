@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Part 1 - Build a AmazonLinux_EC2 stack with CloudFormation
+
+Mappings:
+  RegionWiseImageIds:
+    us-east-1:
+      Ubuntu22: ami-052efd3df9dad4825
+      Amazonlinux: ami-0cff7528ff583bf9a
+
+Resources:
+  WebAppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0cff7528ff583bf9a
+      InstanceType: t2.micro
+      KeyName: aws-eb
+      SecurityGroupIds:
+        - !Ref WebAppSecurityGroup
+
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      ImageId: !FindInMap 
+        - RegionWiseImageIds
+
+      GroupName: !Join ["-", [webapp-security-group, dev]]
+      GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - DNSProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  EC2InstanceAZname:
+    Value: !GetAtt WebserverEC2Instance.AvailabilityZone
+    Description: This is the Availability Zone
+  Ec2InstancePublicIpAddress:
+    Value: !GetAtt WebserverEc2Instance.PublicIp
+    Description: This gives the public ip address
+  Ec2InstancePublicDNSAddress:
+    Value: !GetAtt WebserverEC2Instance.PublicDnsName
+    Description: This gives the public DNS address

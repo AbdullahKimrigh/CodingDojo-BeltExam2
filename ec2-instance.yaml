@@ -1,0 +1,75 @@
+--- 
+AWSTemplateFormatVersion: 2010-09-09
+Conditions: 
+  CreateProResources: 
+    - EnvironmentType
+    - prod
+Description: "This is my first Cloud Formation deployment"
+Mappings: 
+  RegionWiseImageIds: 
+    us-east-1: 
+      AmazonLinux: ami-0022f774911c1d690
+      Ubuntu20: ami-09d56f8956ab235b3
+    us-west-1: 
+      AmazonLinux: ami-02541b8af977f6cdd
+      Ubuntu20: ami-0dc5e9ff792ec08e3
+Outputs: 
+  Ec2InstancePublicIpAddress: 
+    Description: "This gives the public ip address"
+    Value: WebserverEc2Instance.PublicIp
+Parameters: 
+  EnvironmentType: 
+    AllowedValues: 
+      - test
+      - prod
+    Description: "This defines the environment type"
+    Type: String
+  InstanceType: 
+    Description: "This is a paramete for Instance Type"
+    Type: String
+Resources: 
+  MountPoint: 
+    Condition: CreateProResources
+    Properties: 
+      Device: /dev/sdh
+      InstanceId: WebserverEc2Instance
+      VolumeId: NewVolume
+    Type: "AWS::EC2::VolumeAttachment"
+  NewVolume: 
+    Condition: CreateProResources
+    Properties: 
+      AvailabilityZone: WebserverEc2Instance.AvailabilityZone
+      Size: 100
+      Tags: 
+        - 
+          Key: MyTag
+          Value: TagValue
+    Type: "AWS::EC2::Volume"
+  SecurityGroup: 
+    Properties: 
+      GroupDescription: "Allow http to client host"
+      SecurityGroupIngress: 
+        - 
+          CidrIp: 0.0.0.0/0
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+    Type: "AWS::EC2::SecurityGroup"
+  WebserverEc2Instance: 
+    Properties: 
+      ImageId: 
+        - RegionWiseImageIds
+        - "AWS::Region"
+        - Ubuntu22
+      InstanceType: InstanceType
+      SecurityGroupIds: 
+        - 
+          Ref: SecurityGroup
+      Tags: 
+        - 
+          Key: Name
+          Value: WebserverEc2Instance
+        - 
+          Key: Project
+          Value: "My first Ec2 instance from Cloud Formation"
+    Type: "AWS::EC2::Instance"
